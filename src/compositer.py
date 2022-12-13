@@ -6,7 +6,6 @@ import os
 from CompositeResource import CompositeResource
 import grequests
 
-
 compositer = Blueprint('compositer', __name__)
 SERVER_RECIPE = "localhost:5011"
 SERVER_INGREDIENT = "localhost:5012"
@@ -15,6 +14,21 @@ if "api_endpoint_recipe" in os.environ:
 if "api_endpoint_ingredient" in os.environ:
     SERVER_INGREDIENT = os.environ["api_endpoint_ingredient"]
 
+def get_rsp_id(rsp, param_name, name, param_id):
+    """get the id from rsp where dict[param_name] == name"""
+    tmp = json.loads(rsp.response[0].decode())['Data']
+    id = None
+    if type(tmp) == list:
+        for i in tmp:
+            print(i[param_name])
+            if i[param_name].lower() == name.lower(): 
+                id = i[param_id]
+            else: 
+                print('No exact name')
+    else:
+        id = tmp[param_id]
+    return id
+        
 
 @compositer.post("/compositer/<string:recipe_data>")
 def add_recipes(recipe_data):
@@ -29,6 +43,8 @@ def add_recipes(recipe_data):
     data = request.get_json()
     print(data)
     ingredients = data["ingredients"]
+    recipe_id = None
+    ingredient_id = None
 
     # list get_urls to be called
     get_urls = [
@@ -78,6 +94,7 @@ def add_recipes(recipe_data):
                     return Response("ERROR MAPPING RECIPE TO INGREDIENTS", status=404, content_type="text/plain")
         except:
             return Response("ERROR MAPPING RECIPE TO INGREDIENTS", status=404, content_type="text/plain")
+
         rsp = Response(json.dumps({
             'Data': recipe.json()['Data'],
             'Links': [
