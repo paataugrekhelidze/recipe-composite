@@ -3,7 +3,6 @@ import json
 import urllib 
 import requests
 import os
-import grequests
 
 compositer = Blueprint('compositer', __name__)
 API_ENDPOINT = "localhost:5011"
@@ -22,21 +21,20 @@ def add_recipes(recipe_data):
     if recipe_name is None:
         return Response("INVALID CALL, MISSING RECIPE NAME", status=404, content_type="text/plain")
     data = request.get_json()
-    print(data)
+    
     ingredients = data["ingredients"]
     recipe_id = None
     ingredient_id = None
 
     # list get_urls to be called
     get_urls = [
-        API_ENDPOINT + f"/recipes?name={recipe_name}"
+        API_ENDPOINT + f"/recipes/?name={recipe_name}"
     ]
     for ingredient in ingredients:
-        get_urls.append(API_ENDPOINT + f"/ingredient?name={ingredient}")
+        get_urls.append(API_ENDPOINT + f"/ingredient/?name={ingredient}")
 
     # call all requests simultaneously
-    reqs = (grequests.get(u) for u in get_urls)
-    get_results = grequests.map(reqs)
+    get_results = [requests.get(u) for u in get_urls]
 
     # return error if the recipe exists
     if (get_results[0].status_code == 200):
@@ -52,7 +50,6 @@ def add_recipes(recipe_data):
             if (get_results[i+1].status_code > 400):
                 # ingredient name was not found, create a new ingredient
                 new_ingredient = requests.post(API_ENDPOINT + f"/ingredient/ingredient_name={ingredient}&description=None")
-                print(new_ingredient.status_code,new_ingredient.json())
                 if new_ingredient.status_code > 400:
                     return Response("ERROR ADDING INGREDIENTS", status=404, content_type="text/plain")
                 ingredient_ids.append(new_ingredient.json()['Data'])
@@ -67,8 +64,7 @@ def add_recipes(recipe_data):
             post_map.append(API_ENDPOINT + f"/ingredient/recipe_ingredient/recipe_id={recipe.json()['Data']}&ingredient_id={ingredient_id}")
         try:
             # create a map (recipe_id, ingredient_id)
-            reqs = (grequests.post(u) for u in post_map)
-            post_results = grequests.map(reqs)
+            post_results = [requests.post(u) for u in post_map]
 
             for result in post_results:
                 if (result.status_code > 400):
