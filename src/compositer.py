@@ -6,12 +6,9 @@ import os
 import grequests
 
 compositer = Blueprint('compositer', __name__)
-SERVER_RECIPE = "localhost:5011"
-SERVER_INGREDIENT = "localhost:5012"
-if "api_endpoint_recipe" in os.environ:
-   SERVER_RECIPE = os.environ["api_endpoint_recipe"]
-if "api_endpoint_ingredient" in os.environ:
-    SERVER_INGREDIENT = os.environ["api_endpoint_ingredient"]
+API_ENDPOINT = "localhost:5011"
+if "API_ENDPOINT" in os.environ:
+   API_ENDPOINT = os.environ["API_ENDPOINT"]
         
 
 @compositer.post("/compositer/<string:recipe_data>")
@@ -32,10 +29,10 @@ def add_recipes(recipe_data):
 
     # list get_urls to be called
     get_urls = [
-        SERVER_RECIPE + f"/recipes?name={recipe_name}"
+        API_ENDPOINT + f"/recipes?name={recipe_name}"
     ]
     for ingredient in ingredients:
-        get_urls.append(SERVER_INGREDIENT + f"/ingredient?name={ingredient}")
+        get_urls.append(API_ENDPOINT + f"/ingredient?name={ingredient}")
 
     # call all requests simultaneously
     reqs = (grequests.get(u) for u in get_urls)
@@ -46,7 +43,7 @@ def add_recipes(recipe_data):
         return Response("RECIPE ALREADY EXISTS", status=404, content_type="text/plain")
     
     # api returns new recipe id
-    recipe = requests.post(SERVER_RECIPE + f"/recipes/recipe_name={recipe_name}")
+    recipe = requests.post(API_ENDPOINT + f"/recipes/recipe_name={recipe_name}")
     ingredient_ids = list()
     # if recipe is successfully created proceed further
     if recipe.status_code == 200:
@@ -54,7 +51,7 @@ def add_recipes(recipe_data):
         for i in range(len(ingredients)):
             if (get_results[i+1].status_code > 400):
                 # ingredient name was not found, create a new ingredient
-                new_ingredient = requests.post(SERVER_INGREDIENT + f"/ingredient/ingredient_name={ingredient}&description=None")
+                new_ingredient = requests.post(API_ENDPOINT + f"/ingredient/ingredient_name={ingredient}&description=None")
                 print(new_ingredient.status_code,new_ingredient.json())
                 if new_ingredient.status_code > 400:
                     return Response("ERROR ADDING INGREDIENTS", status=404, content_type="text/plain")
@@ -67,7 +64,7 @@ def add_recipes(recipe_data):
         # loop through ingredient ids and create ingredient_recipe map entry in the database
         post_map = list()
         for ingredient_id in ingredient_ids:
-            post_map.append(SERVER_INGREDIENT + f"/ingredient/recipe_ingredient/recipe_id={recipe.json()['Data']}&ingredient_id={ingredient_id}")
+            post_map.append(API_ENDPOINT + f"/ingredient/recipe_ingredient/recipe_id={recipe.json()['Data']}&ingredient_id={ingredient_id}")
         try:
             # create a map (recipe_id, ingredient_id)
             reqs = (grequests.post(u) for u in post_map)
