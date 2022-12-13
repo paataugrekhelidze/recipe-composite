@@ -3,7 +3,6 @@ import json
 import urllib 
 import requests
 import os
-from CompositeResource import CompositeResource
 import grequests
 
 compositer = Blueprint('compositer', __name__)
@@ -13,21 +12,6 @@ if "api_endpoint_recipe" in os.environ:
    SERVER_RECIPE = os.environ["api_endpoint_recipe"]
 if "api_endpoint_ingredient" in os.environ:
     SERVER_INGREDIENT = os.environ["api_endpoint_ingredient"]
-
-def get_rsp_id(rsp, param_name, name, param_id):
-    """get the id from rsp where dict[param_name] == name"""
-    tmp = json.loads(rsp.response[0].decode())['Data']
-    id = None
-    if type(tmp) == list:
-        for i in tmp:
-            print(i[param_name])
-            if i[param_name].lower() == name.lower(): 
-                id = i[param_id]
-            else: 
-                print('No exact name')
-    else:
-        id = tmp[param_id]
-    return id
         
 
 @compositer.post("/compositer/<string:recipe_data>")
@@ -48,7 +32,7 @@ def add_recipes(recipe_data):
 
     # list get_urls to be called
     get_urls = [
-        SERVER_RECIPE + f"/recipes?name/{recipe_name}"
+        SERVER_RECIPE + f"/recipes?name={recipe_name}"
     ]
     for ingredient in ingredients:
         get_urls.append(SERVER_INGREDIENT + f"/ingredient?name={ingredient}")
