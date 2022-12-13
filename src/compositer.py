@@ -49,7 +49,7 @@ def add_recipes(recipe_data):
         for i in range(len(ingredients)):
             if (get_results[i+1].status_code > 400):
                 # ingredient name was not found, create a new ingredient
-                new_ingredient = requests.post(API_ENDPOINT + f"/ingredient/ingredient_name={ingredient}&description=None")
+                new_ingredient = requests.post(API_ENDPOINT + f"/ingredient/ingredient_name={ingredients[i]}&description=None")
                 if new_ingredient.status_code > 400:
                     return Response("ERROR ADDING INGREDIENTS", status=404, content_type="text/plain")
                 ingredient_ids.append(new_ingredient.json()['Data'])
