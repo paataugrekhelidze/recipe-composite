@@ -9,7 +9,7 @@ CORS(app)
 app.register_blueprint(compositer)
 @app.before_request
 def before_request():
-    logged_in = requests.get(os.environ["api_endpoint"] + "/auth/is_logged_in").status_code==200
+    logged_in = requests.get(os.environ["API_ENDPOINT"] + "/auth/is_logged_in").status_code==200
     if not logged_in:
         return Response("NOT AUTHENTICATED", status=401, content_type="text/plain")
 
