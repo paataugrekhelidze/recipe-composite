@@ -24,7 +24,7 @@ def add_recipes(recipe_data):
         return Response("INVALID CALL, MISSING RECIPE NAME", status=404, content_type="text/plain")
     data = request.get_json()
 
-    ingredients = data["ingredients"]
+    ingredients = json.loads(data["ingredients"])["ingredients"]
     recipe_id = None
     ingredient_id = None
 
