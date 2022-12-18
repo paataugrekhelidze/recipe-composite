@@ -1,27 +1,29 @@
-from flask import Blueprint, Response, request, current_app
+from flask import Blueprint, Response, request
+from flask_cors import cross_origin
 import json
-import urllib 
+import urllib
 import requests
 import os
 
-compositer = Blueprint('compositer', __name__)
+compositer = Blueprint('composite', __name__)
 API_ENDPOINT = "localhost:5011"
 if "API_ENDPOINT" in os.environ:
-   API_ENDPOINT = os.environ["API_ENDPOINT"]
-        
+    API_ENDPOINT = os.environ["API_ENDPOINT"]
 
-@compositer.post("/compositer/<string:recipe_data>")
+
+@compositer.post("/composite/<string:recipe_data>")
+@cross_origin(supports_credentials=True)
 def add_recipes(recipe_data):
-    """check wether the ingredients exist, add missing ingredients.
+    """check whether the ingredients exist, add missing ingredients.
         return error if a recipe to be added already exists"""
-    
-    
+
+
     recipe_data = urllib.parse.parse_qs(urllib.parse.unquote(recipe_data))
     recipe_name = recipe_data['recipe_name'][0] if 'recipe_name' in recipe_data else None
     if recipe_name is None:
         return Response("INVALID CALL, MISSING RECIPE NAME", status=404, content_type="text/plain")
     data = request.get_json()
-    
+
     ingredients = data["ingredients"]
     recipe_id = None
     ingredient_id = None
@@ -37,9 +39,9 @@ def add_recipes(recipe_data):
     get_results = [requests.get(u) for u in get_urls]
 
     # return error if the recipe exists
-    if (get_results[0].status_code == 200):
+    if get_results[0].status_code == 200:
         return Response("RECIPE ALREADY EXISTS", status=404, content_type="text/plain")
-    
+
     # api returns new recipe id
     recipe = requests.post(API_ENDPOINT + f"/recipes/recipe_name={recipe_name}")
     ingredient_ids = list()
@@ -47,7 +49,7 @@ def add_recipes(recipe_data):
     if recipe.status_code == 200:
         # check missing ingredients and add to the ingredients database
         for i in range(len(ingredients)):
-            if (get_results[i+1].status_code > 400):
+            if get_results[i+1].status_code > 400:
                 # ingredient name was not found, create a new ingredient
                 new_ingredient = requests.post(API_ENDPOINT + f"/ingredient/ingredient_name={ingredients[i]}&description=None")
                 if new_ingredient.status_code > 400:
@@ -56,7 +58,6 @@ def add_recipes(recipe_data):
                 #post_ingredients.append(SERVER + f"/ingredient/{ingredient}")
             else:
                 ingredient_ids.append(get_results[i+1].json()['Data'][0]['ingredient_id'])
-            
 
         # loop through ingredient ids and create ingredient_recipe map entry in the database
         post_map = list()
@@ -67,7 +68,7 @@ def add_recipes(recipe_data):
             post_results = [requests.post(u) for u in post_map]
 
             for result in post_results:
-                if (result.status_code > 400):
+                if result.status_code > 400:
                     return Response("ERROR MAPPING RECIPE TO INGREDIENTS", status=404, content_type="text/plain")
         except:
             return Response("ERROR MAPPING RECIPE TO INGREDIENTS", status=404, content_type="text/plain")
@@ -76,7 +77,7 @@ def add_recipes(recipe_data):
             'Data': recipe.json()['Data'],
             'Links': [
                 {
-                    "href": f"/compositr/{recipe_name}",
+                    "href": f"/composite/{recipe_name}",
                     "rel": "add new recipe",
                     "type": "POST"
                 }
