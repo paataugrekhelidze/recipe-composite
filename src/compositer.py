@@ -5,13 +5,13 @@ import urllib
 import requests
 import os
 
-compositer = Blueprint('composite', __name__)
+compositer = Blueprint('compositer', __name__)
 API_ENDPOINT = "localhost:5011"
 if "API_ENDPOINT" in os.environ:
     API_ENDPOINT = os.environ["API_ENDPOINT"]
 
 
-@compositer.post("/composite/<string:recipe_data>")
+@compositer.post("/compositer/<string:recipe_data>")
 @cross_origin(supports_credentials=True)
 def add_recipes(recipe_data):
     """check whether the ingredients exist, add missing ingredients.
@@ -77,7 +77,7 @@ def add_recipes(recipe_data):
             'Data': recipe.json()['Data'],
             'Links': [
                 {
-                    "href": f"/composite/{recipe_name}",
+                    "href": f"/compositer/{recipe_name}",
                     "rel": "add new recipe",
                     "type": "POST"
                 }
