@@ -1,6 +1,8 @@
 from flask import Flask, Response, request
 from flask_cors import CORS
 from compositer import compositer
+import requests
+import os
 
 # Create the Flask application object.
 app = Flask(__name__)
