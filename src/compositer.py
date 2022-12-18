@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, request, current_app
+from flask_cors import cross_origin
 import json
 import urllib 
 import requests
@@ -11,6 +12,7 @@ if "API_ENDPOINT" in os.environ:
         
 
 @compositer.post("/compositer/<string:recipe_data>")
+@cross_origin(supports_credentials=True)
 def add_recipes(recipe_data):
     """check wether the ingredients exist, add missing ingredients.
         return error if a recipe to be added already exists"""
